@@ -42,9 +42,9 @@ where not exists(select *
 
 	where vendor_num = a.vendor_num
 	
-	and delivery_method = 'DTV')
+	and delivery_method = 'DTV') -- Have not done Action B
 	
-and delivery_method = 'DTS';
+and delivery_method = 'DTS'; -- Have done Action A
 
 -- 2. Second approach is marking DTV as 0 and the rest as 1. If vendors used DTV before, they will be assigned both 1 and 0 value, so vendors who have not used DTV have min value = 1
 
@@ -54,9 +54,9 @@ with
 	
 			case
 			
-			when delivery_method in ('DTS') then 1
+			when delivery_method in ('DTS') then 1 -- Have done Action A
 			
-			when delivery_method = 'DTV' then 0
+			when delivery_method = 'DTV' then 0 -- Have not done Action B
             
 			else null 
      
