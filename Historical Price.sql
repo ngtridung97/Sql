@@ -102,7 +102,9 @@ vendor_num|item_idnt|item_desc                                 |min_doc_date|max
 6021709   |  1034234|JUMBO FREE RANGE EGGS 12 PACK:800 GRAM    |  2019-01-15|  2019-01-22|   $50.75|
 6021709   |  1034234|JUMBO FREE RANGE EGGS 12 PACK:800 GRAM    |  2019-01-02|  2019-01-07|   $55.00|
 6021709   |  2680008|FREE RANGE EGGS 6 PACK 300G:300 GRAM      |  2019-01-04|  2019-01-11|   $47.45|
-6021709   |  2680008|FREE RANGE EGGS 6 PACK 300G:300 GRAM      |  2019-01-16|  2019-02-14|   $50.50|
+6021709   |  2680008|FREE RANGE EGGS 6 PACK 300G:300 GRAM      |  2019-01-16|  2019-02-14|   $50.50| -- overlap to below line
 6021709   |  2680008|FREE RANGE EGGS 6 PACK 300G:300 GRAM      |  2019-02-04|  2019-02-07|   $59.25|
 6021709   |  3169697|ORGANIC FREE RANGE EGGS 12PK 600G:600 GRAM|  2019-01-10|  2019-01-16|   $85.50|
 6021709   |  3169697|ORGANIC FREE RANGE EGGS 12PK 600G:600 GRAM|  2019-01-02|  2019-01-09|   $87.00|
+
+At first glance, it's okay. But then we should notice item '2680008' is overlapped in date range because of the repeat of price $50.50. Therefore, this method can't tell the Manager the correct answer. */
