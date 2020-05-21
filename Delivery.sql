@@ -23,6 +23,11 @@ vendor_num|ref_num |doc_date  |inv_ext_cost|delivery_method|
 6021456   |SI508626|2019-01-02|   $3,794.00|DC             |
 6021456   |SI508627|2019-01-02|   $7,082.00|DC             |
 
+Sample description:
+    1. DTS is Direct to Store: vendors deliver goods to our Store.
+    2. DC is Delivery Center: vendors deliver goods to our DC.
+    3. DTV is Direct to Vendor: we collect goods from vendors.
+
 The Manager wants to know which vendors have used DTS but have not used DTV method, then sends them an email to promote this delivery type. Suppose DTS would cost us more freight charge than DTV. */
 
 -- 1. First approach is using not exists and correlated subquery to display vendors have not used DTV, then filter one more condtition to detect which still use DTS. 
