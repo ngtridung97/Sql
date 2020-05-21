@@ -45,3 +45,36 @@ where not exists(select *
 	and delivery_method = 'DTV')
 	
 and delivery_method = 'DTS';
+
+-- 2. Second approach is marking DTV as 0 and the rest as 1. If vendors used DTV before, they will be assigned both 1 and 0 value, so vendors who have not used DTV have min value = 1
+
+with
+
+	delivery_method_check as (select ref_num, vendor_num, delivery_method,
+	
+			case
+			
+			when delivery_method in ('DTS') then 1
+			
+			when delivery_method = 'DTV' then 0
+            
+			else null 
+     
+     		end as delivery_method_check
+     		
+     	from public.delivery)
+     		
+select vendor_num
+
+from delivery_method_check
+
+group by vendor_num
+
+having min(delivery_method_check) = 1;
+
+/* Result
+
+vendor_num|
+----------|
+6021709   |
+6046789   | */
