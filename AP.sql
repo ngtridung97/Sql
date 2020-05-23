@@ -32,6 +32,12 @@ vendor_num|doc_dte   |process_dte|ref_num     |absvalue|totalinvamt|taxablevalue
 6021709   |2018-03-12| 2018-03-12|INVC868     | $137.44|    $137.44|     $124.94|  $12.50|KD      |1061    |3400883707 |     2019|AUD     |2019-05-12|3100047380    |  $7,779.68|   $0.00|     0.00|
 6021709   |2018-03-12| 2018-03-12|INVC867     |  $50.20|     $50.20|      $45.64|   $4.56|KD      |1061    |3400883636 |     2019|AUD     |2019-05-12|3100047380    |  $7,779.68|   $0.00|     0.00|
 
+Sample description
+	1. This table is created by joinning between bseg and bkbf tables from SAP.
+	2. Positive number referred to the amount client paid to vendors, negative number referred to the amount client claimed from vendors.
+	3. Columns acc_doc_num, fiscal_yr, clientid together are correspond with benlr, gjark, bukrs in SAP system.
+	4. Certain amount of transactions will be totallzied and settled by specific clring_doc_num (Remittance Advice).
+
 Below queries are an overview before taking on deeper analysis on this AP data. */
 
 -- 1. Dupp transactions
@@ -53,6 +59,8 @@ acc_doc_num|fiscal_yr|clientid|count|
 
 
 -- 2. Clearing information - Monitor uncleared transactions distribution
+
+-- https://stackoverflow.com/questions/10404348/sql-server-dynamic-pivot-query
 
 select
 
