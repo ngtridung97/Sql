@@ -16,6 +16,7 @@ inner join pg_stat_user_tables b
 
 on a.table_schema = b.schemaname and a.table_name = b.relname;
 
+
 -- 2. Running queries
 
 select
@@ -33,3 +34,16 @@ on a.pid = b.pid
 where a.query != '<IDLE>' and a.query not like '%pg_stat_activity%'
 
 order by b.granted, b.pid desc;
+
+
+-- 3. Database name and size
+
+select
+  
+	datname as db,
+	
+	pg_size_pretty(pg_database_size(datname)) as db_size
+	
+from pg_database
+
+order by pg_database_size(datname) desc;
