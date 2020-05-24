@@ -47,3 +47,22 @@ select
 from pg_database
 
 order by pg_database_size(datname) desc;
+
+
+-- 4. Table name and size
+
+select
+
+	concat(nspname, '.', relname) as table_name,
+	
+	pg_size_pretty(pg_total_relation_size(a.oid)) as table_size
+
+from pg_class a
+
+left join pg_namespace b
+
+on b.oid = a.relnamespace
+
+where b.nspname not in ('pg_catalog', 'information_schema') and a.relkind <> 'i' and b.nspname !~ '^pg_toast'
+
+order by pg_total_relation_size(a.oid) desc;
