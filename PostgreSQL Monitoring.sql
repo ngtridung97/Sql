@@ -49,13 +49,15 @@ from pg_database
 order by pg_database_size(datname) desc;
 
 
--- 4. Table name and size
+-- 4. Table, index, schema name and size
 
 select
 
-	concat(nspname, '.', relname) as table_name,
+	concat(nspname, '.', relname) as relation_name,
 	
-	pg_size_pretty(pg_total_relation_size(a.oid)) as table_size
+	pg_size_pretty(pg_total_relation_size(a.oid)) as table_size,
+
+	pg_size_pretty(sum(pg_total_relation_size(a.oid)) over(partition by nspname)) as schema_size
 
 from pg_class a
 
@@ -63,6 +65,29 @@ left join pg_namespace b
 
 on b.oid = a.relnamespace
 
-where b.nspname not in ('pg_catalog', 'information_schema') and a.relkind <> 'i' and b.nspname !~ '^pg_toast'
+where b.nspname not in ('pg_catalog', 'information_schema') and b.nspname !~ '^pg_toast'
 
 order by pg_total_relation_size(a.oid) desc;
+
+
+-- 5. Unused indexes
+ 
+select
+
+	relname as table_name,
+	
+	indexrelname as index_name,
+	
+	idx_scan,
+	
+	idx_tup_read,
+	
+	idx_tup_fetch,
+	
+	pg_size_pretty(pg_relation_size(indexrelname::regclass))
+	
+from pg_stat_all_indexes
+
+where schemaname not in ('pg_catalog', 'pg_toast') and idx_scan = 0 and idx_tup_read = 0 and idx_tup_fetch = 0
+
+order by pg_relation_size(indexrelname::regclass) desc;
