@@ -15,6 +15,34 @@
  ---                     ---
 7881|   1630|      2016-12-31|
 
-Sample description: This table could be in many contexts: selling groceries, financial services or gym memberships.
+Sample description:
 
-The Manager wants to know about Customer Retenion which is one of the key metrics that influences revenue. */
+    1. This table could be in many contexts: selling groceries, financial services or gym memberships.
+    2. transaction_date from Jan 2016 to Dec 2016.
+
+The Manager wants to know more about Customer Retenion which is one of the key metrics that influences revenue. */
+
+
+-- 1. Customer Retention over time
+
+with
+
+	start_month as (select user_id
+	
+		from public.transaction
+		
+		group by user_id
+		
+		having to_char(min(transaction_date), 'yyyy-mm') = '2016-01') -- we can adjust difference month to indicate difference result
+		
+select 
+
+	to_char(transaction_date, 'yyyy-mm') as transaction_ym,
+	
+	count(distinct user_id) as count_user
+	
+from public.transaction
+
+where user_id in (select user_id from start_month)
+
+group by 1;
