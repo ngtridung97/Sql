@@ -39,8 +39,63 @@ group by 1;
 ```
 ### New vs Existing customer
 ----------
+Another idea we could have is: the people who came in January, how many of them returned in February, or did they come across in March afterward?
+
+In this case, we need to know some insights such as what ratio of our customers who are retained in any given month, how many are returning, or how many are new.
+
+To solve the problem, we would like to improve our view a bit to identify the time lapse between each visit. Hence, for each person and each month, we could detect when the next visit is.
+
+**Create a table where each customer’s transaction is logged by month**
+```sql
+with
+
+	transaction_log as (select user_id, date_trunc('month', transaction_date) as trunc_month, date_part('month', age(transaction_date, '2016-01-01')) as month_number
+
+		from public.transaction
+		
+		group by 1, 2, 3),
+```
+**Calculate time gaps between transactions and categorize that**
+```sql
+	time_lapse as (select user_id, trunc_month, month_number, lag(month_number) over (partition by user_id order by user_id, month_number)
+	
+		from transaction_log),
+		
+	time_diff as (select user_id, trunc_month, (month_number - lag) as time_diff
+	
+		from time_lapse),
+		
+	category as (select user_id, trunc_month,
+	
+			case
+				when time_diff = 1 then 'Retained'
+				when time_diff > 1 then 'Returning'
+				when time_diff is null then 'New'
+			end as cust_type
+			
+		from time_diff)
+```
+**And establish the number of customers who visited monthly by categories**
+```sql
+select
+
+	trunc_month,
+	
+	cust_type,
+	
+	count(user_id) as count_user
+
+from category
+
+group by 1, 2
+
+order by 1, 2;
+```
 ### Cohort Analysis
 ----------
+A popular way to visualize customer retention is using [Cohort Analysis](https://amplitude.com/blog/2015/11/24/cohorts-to-improve-your-retention), i.e. defining each user by their first visit and then tracking how they return over time.
+
+Our final result will display the number of new users is increasing (might be decreasing too :() in every cohort year, month, or week, as well as the following retention rate from that moment.
 
 ### Feedback & Suggestions
 ----------
