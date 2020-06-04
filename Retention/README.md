@@ -43,7 +43,7 @@ Another idea we could have is: the people who came in January, how many of them 
 
 In this case, we need to know some insights such as what ratio of our customers who are retained in any given month, how many are returning, or how many are new.
 
-To solve the problem, we would like to improve our view a bit to identify the time lapse between each visit. Hence, for each person and each month, we could detect when the next visit is.
+To solve the problem, we would like to improve our view a bit to identify the time lapse between each transaction. Hence, for each person and each month, we could detect when the next transaction is.
 
 **Create a table where each customer’s transaction is logged by month**
 ```sql
@@ -93,10 +93,75 @@ order by 1, 2;
 ```
 ### Cohort Analysis
 ----------
-A popular way to visualize customer retention is using [Cohort Analysis](https://amplitude.com/blog/2015/11/24/cohorts-to-improve-your-retention), i.e. defining each user by their first visit and then tracking how they return over time.
+A popular way to visualize customer retention is using [Cohort Analysis](https://amplitude.com/blog/2015/11/24/cohorts-to-improve-your-retention), i.e. defining each user by their first transaction and then tracking how they return over time.
 
-Our final result will display the number of new users is increasing (might be decreasing too :() in every cohort year, month, or week, as well as the following retention rate from that moment.
+Our final result will display the number of new users is increasing (might be decreasing too :anguished:) in every cohort year, month, or week, as well as the following retention rate from that moment.
+
+**Get first transaction month and time gaps from that first month**
+```sql
+with
+
+	min_date as (select user_id, min(transaction_date) as min_transaction_date
+
+		from public.transaction
+		
+		group by user_id),
+
+	cohort_month as (select user_id, date_trunc('month', min_transaction_date) as cohort_month
+  
+		from min_date),
+		
+	user_log as (select a.user_id, date_part('month', age(date_trunc('month', a.transaction_date), b.cohort_month)) as month_number
+  
+		from public.transaction a
+  
+		left join cohort_month b
+		
+		on a.user_id = b.user_id
+  
+		group by 1, 2),
+```
+**Aggregate user, first CTE for the retaining and second CTE for the new**
+```sql
+		
+	month_number_size as (select b.cohort_month, a.month_number, count(*) as count_user
+  
+		from user_log a
+  
+		left join cohort_month b
+		
+		on a.user_id = b.user_id
+  
+		group by 1, 2),	
+		
+	cohort_size as (select cohort_month, count(*) as count_user
+  
+		from cohort_month
+
+		group by 1)
+```
+**Combine above CTEs then calculate retained rate**
+```sql
+		
+select
+
+	m.cohort_month,
+	
+	c.count_user,
+	
+	m.month_number,
+	
+	(m.count_user::float/c.count_user) as retention_rate
+	
+from month_number_size m
+
+left join cohort_size c
+
+on m.cohort_month = c.cohort_month
+
+order by 1, 3;
+```
 
 ### Feedback & Suggestions
 ----------
-Feel free to fork, comment or give feedback to ng.tridung97@gmail.com
+Please feel free to fork, comment or give feedback to ng.tridung97@gmail.com
