@@ -3,6 +3,7 @@ Suppose you were running grocery stores, financial services, or gym memberships,
 **Features:**
 + Database: [PostgreSQL 12.1 64-bit](https://www.postgresql.org/download/)
 + Dataset: [Sample.csv](https://github.com/ngtridung97/Sql/blob/master/Retention/Sample.csv)
++ Sample Script: [Retention Analysis.sql](https://github.com/ngtridung97/Sql/blob/master/Retention/Retention%20Analysis.sql)
 + Sample Period: January 2016 - December 2016
 
 See how it works below
@@ -37,6 +38,11 @@ where user_id in (select user_id from start_month)
 
 group by 1;
 ```
+
+**Result**
+
+![](https://github.com/ngtridung97/Sql/blob/master/Retention/1.png?raw=true)
+
 ### New vs Existing customer
 ----------
 Another idea we could have is: the people who came in January, how many of them returned in February, or did they come across in March afterward?
@@ -91,6 +97,11 @@ group by 1, 2
 
 order by 1, 2;
 ```
+
+**Result**
+
+![](https://github.com/ngtridung97/Sql/blob/master/Retention/2.png?raw=true)
+
 ### Cohort Analysis
 ----------
 A popular way to visualize customer retention is using [Cohort Analysis](https://amplitude.com/blog/2015/11/24/cohorts-to-improve-your-retention), i.e. defining each user by their first transaction and then tracking how they return over time.
@@ -161,6 +172,10 @@ on m.cohort_month = c.cohort_month
 
 order by 1, 3;
 ```
+
+**Result**
+
+![](https://github.com/ngtridung97/Sql/blob/master/Retention/3.png?raw=true)
 
 ### Feedback & Suggestions
 ----------
