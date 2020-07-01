@@ -1,15 +1,15 @@
 /* Assume that we have a sample record look like this
 
-invoice   |status   |batch   |
-----------|---------|--------|
-INV1      |Paid     |202001  |
-INV2      |Paid     |202001  |
-INV3      |Paid     |202001  |
-INV4      |Unpaid	|202001  |
-INV5	  |Unpaid	|202001  |
-INV1	  |Paid		|202002  |
-INV2	  |Paid		|202002  |
-INV3	  |Paid		|202002  |
+invoice_id|status|batch |
+----------|------|------|
+INV01     |Paid  |202001|
+INV02     |Paid  |202001|
+INV03     |Paid  |202001|
+INV04     |Unpaid|202001|
+INV05     |Unpaid|202001|
+INV01     |Paid  |202002|
+INV02     |Paid  |202002|
+INV03     |Paid  |202002|
 
 Sample description
 	1. Dataset contains payment invoices status (Paid or Unpaid).

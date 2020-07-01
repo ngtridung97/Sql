@@ -1,181 +1,150 @@
-Suppose you were running grocery stores, financial services, or gym memberships, you would care about how many new customers engaged in your business as well as how many customers returned to you again. The metric, which indicates that scenario, is called [retention](https://en.wikipedia.org/wiki/Customer_retention#:~:text=Customer%20retention%20refers%20to%20the,or%20to%20non%2Duse%20entirely.). High customer retention means they tend to return, continue to buy or in some other way not defect to another product or business, or to non-use entirely.
+Suppose you were receiving invoice report from client every month (batch). But unfortunately the report is not clean enough for your boss to read. Then he or she had you to analyze, to detect which invoices were paid, which were unpaid and which were missing from the newest batch.
 
 **Features:**
 + Database: [PostgreSQL 12.1 64-bit](https://www.postgresql.org/download/)
-+ Dataset: [Sample.csv](https://github.com/ngtridung97/Sql/blob/master/Retention/Sample.csv)
-+ Sample Script: [Retention Analysis.sql](https://github.com/ngtridung97/Sql/blob/master/Retention/Retention%20Analysis.sql)
-+ Sample Period: January 2016 - December 2016
++ Sample Script and Dataset: [Status Change.sql](https://github.com/ngtridung97/Sql/blob/master/Batch%20Invoice/Status%20Change.sql)
++ Sample Period: January 2020 - April 2020
 
 See how it works below
 
-### Retention over time
+### Prepare data
 ----------
-Customer retention curve can be used for understanding our clients, and will draw an explanation to other things like sales figures or impact of marketing initiatives. There is an easy way to visualize key interaction between customers and the business, which could be known as, whether or not customers return after their first visit.
-
-**Gather all user_id from the selected month**
+**Create new table**
 ```sql
-with
+drop table if exists public.invoice_status;
 
-	start_month as (select user_id
-	
-		from public.transaction
-		
-		group by user_id
-		
-		having to_char(min(transaction_date), 'yyyy-mm') = '2016-01')
+create table public.invoice_status (
+
+	invoice_id text,
+	status text,
+	batch text
+
+);
 ```
-**Aggregate user in the CTE above**
+**Insert values**
 ```sql		
-select 
+insert into public.invoice_status (invoice_id, status, batch)
 
-	to_char(transaction_date, 'yyyy-mm') as transaction_ym,
-	
-	count(distinct user_id) as count_user
-	
-from public.transaction
+values
 
-where user_id in (select user_id from start_month)
-
-group by 1;
+	('INV01', 'Paid', '202001'),
+	('INV02', 'Paid', '202001'),
+	('INV03', 'Paid', '202001'),
+	('INV04', 'Unpaid', '202001'),
+	('INV05', 'Unpaid', '202001'),
+	('INV01', 'Paid', '202002'),
+	('INV02', 'Paid', '202002'),
+	('INV03', 'Paid', '202002'),
+	('INV04', 'Unpaid', '202002'),
+	('INV05', 'Paid', '202002'),
+	('INV06', 'Unpaid', '202002'),
+	('INV07', 'Unpaid', '202002'),
+	('INV08', 'Unpaid', '202002'),
+	('INV01', 'Paid', '202003'),
+	('INV02', 'Paid', '202003'),
+	('INV04', 'Unpaid', '202003'),
+	('INV05', 'Paid', '202003'),
+	('INV06', 'Paid', '202003'),
+	('INV07', 'Unpaid', '202003'),
+	('INV08', 'Unpaid', '202003'),
+	('INV09', 'Unpaid', '202003'),
+	('INV10', 'Unpaid', '202003'),
+	('INV01', 'Paid', '202004'),
+	('INV02', 'Paid', '202004'),
+	('INV04', 'Paid', '202004'),
+	('INV06', 'Paid', '202004'),
+	('INV07', 'Unpaid', '202004'),
+	('INV08', 'Unpaid', '202004'),
+	('INV09', 'Paid', '202004'),
+	('INV10', 'Paid', '202004'),
+	('INV11', 'Unpaid', '202004'),
+	('INV12', 'Unpaid', '202004'),
+	('INV13', 'Unpaid', '202004');
 ```
 
-**Result**
-
-![](https://github.com/ngtridung97/Sql/blob/master/Retention/1.png?raw=true)
-
-### New vs Existing customer
+### Main script
 ----------
-Another idea we could have is: the people who came in January, how many of them returned in February, or did they come across in March afterward?
+Firstly, we observe dataset and should divide status column into 3 part:
 
-In this case, we need to know some insights such as what ratio of our customers who are retained in any given month, how many are returning, or how many are new.
+1. Paid previously (appeared before our analysis).
+2. Pending until now.
+3. Unpaid into Paid.
 
-To solve the problem, we would like to improve our view a bit to identify the time lapse between each transaction. Hence, for each person and each month, we could detect when the next transaction is.
-
-**Create a table where each customer’s transaction is logged by month**
+**Get additional coulmns**
 ```sql
 with
 
-	transaction_log as (select user_id, date_trunc('month', transaction_date) as trunc_month, date_part('month', age(transaction_date, '2016-01-01')) as month_number
-
-		from public.transaction
-		
-		group by 1, 2, 3),
-```
-**Calculate time gaps between transactions and categorize that**
-```sql
-	time_lapse as (select user_id, trunc_month, month_number, lag(month_number) over (partition by user_id order by user_id, month_number)
+	invoice as (select *,
 	
-		from transaction_log),
-		
-	time_diff as (select user_id, trunc_month, (month_number - lag) as time_diff
-	
-		from time_lapse),
-		
-	category as (select user_id, trunc_month,
-	
-			case
-				when time_diff = 1 then 'Retained'
-				when time_diff > 1 then 'Returning'
-				when time_diff is null then 'New'
-			end as cust_type
+			row_number() over(partition by invoice_id order by batch desc) as rn,
 			
-		from time_diff)
-```
-**And establish the number of customers who visited monthly by categories**
-```sql
-select
-
-	trunc_month,
+			lag(status) over(partition by invoice_id order by batch) as prev_status,
 	
-	cust_type,
-	
-	count(user_id) as count_user
-
-from category
-
-group by 1, 2
-
-order by 1, 2;
+			dense_rank() over (partition by invoice_id order by status asc) + dense_rank() over (partition by invoice_id order by status desc) - 1 as invoice_count
+			
+		from public.invoice_status),
 ```
-
-**Result**
-
-![](https://github.com/ngtridung97/Sql/blob/master/Retention/2.png?raw=true)
-
-### Cohort Analysis
-----------
-A popular way to visualize customer retention is using [Cohort Analysis](https://amplitude.com/blog/2015/11/24/cohorts-to-improve-your-retention), i.e. defining each user by their first transaction and then tracking how they return over time.
-
-Our final result will display the number of new users is increasing (might be decreasing too :anguished:) in every cohort year, month, or week, as well as the following retention rate from that moment.
-
-**Get first transaction month and time gaps from that first month**
+**Paid invoices**
 ```sql
-with
 
-	min_date as (select user_id, min(transaction_date) as min_transaction_date
-
-		from public.transaction
+	closed as (select invoice_id, status, 'Paid from beginning' as note, batch as lastest_batch
+	
+		from invoice
 		
-		group by user_id),
-
-	cohort_month as (select user_id, date_trunc('month', min_transaction_date) as cohort_month
-  
-		from min_date),
-		
-	user_log as (select a.user_id, date_part('month', age(date_trunc('month', a.transaction_date), b.cohort_month)) as month_number
-  
-		from public.transaction a
-  
-		left join cohort_month b
-		
-		on a.user_id = b.user_id
-  
-		group by 1, 2),
+		where status = 'Paid' and invoice_count = 1 and rn = 1),
 ```
-**Aggregate user, first CTE for the retaining and second CTE for the new**
+**Unpaid invoices**
 ```sql
 		
-	month_number_size as (select b.cohort_month, a.month_number, count(*) as count_user
-  
-		from user_log a
-  
-		left join cohort_month b
+	pending as (select invoice_id, status, 'Pending' as note, batch as lastest_batch
+	
+		from invoice
 		
-		on a.user_id = b.user_id
-  
-		group by 1, 2),	
-		
-	cohort_size as (select cohort_month, count(*) as count_user
-  
-		from cohort_month
-
-		group by 1)
+		where status = 'Unpaid' and invoice_count = 1 and rn = 1),
 ```
-**Combine above CTEs then calculate retained rate**
+**Unpaid to Paid invoices**
 ```sql
 		
-select
-
-	m.cohort_month,
+	change_status as (select a.invoice_id, a.status, a.batch as note, b.batch as lastest_batch
 	
-	c.count_user,
-	
-	m.month_number,
-	
-	(m.count_user::float/c.count_user) as retention_rate
-	
-from month_number_size m
-
-left join cohort_size c
-
-on m.cohort_month = c.cohort_month
-
-order by 1, 3;
+		from (select * from invoice where status = 'Paid' and invoice_count = 2 and status != prev_status) a
+		
+		inner join (select * from invoice where rn = 1) b
+		
+		on a.invoice_id = b.invoice_id)
 ```
+**Union 3 above parts**
+```sql
+select * from closed
 
-**Result**
+union
 
-![](https://github.com/ngtridung97/Sql/blob/master/Retention/3.png?raw=true)
+select * from pending
+
+union
+
+select * from change_status
+
+order by 1;
+```
+**Sample result**
+invoice_id|status|note               |lastest_batch|
+----------|------|-------------------|-------------|
+INV01     |Paid  |Paid from beginning|202004       |
+INV02     |Paid  |Paid from beginning|202004       |
+INV03     |Paid  |Paid from beginning|202002       |
+INV04     |Paid  |202004             |202004       |
+INV05     |Paid  |202002             |202003       |
+INV06     |Paid  |202003             |202004       |
+INV07     |Unpaid|Pending            |202004       |
+INV08     |Unpaid|Pending            |202004       |
+INV09     |Paid  |202004             |202004       |
+INV10     |Paid  |202004             |202004       |
+INV11     |Unpaid|Pending            |202004       |
+INV12     |Unpaid|Pending            |202004       |
+INV13     |Unpaid|Pending            |202004       |
+
+According to result, there're 5 unpaid invoices and 8 paid invoices. INV03 and INV05 were removed from the lastest batch.
 
 ### Feedback & Suggestions
 ----------
